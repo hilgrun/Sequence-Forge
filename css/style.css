@@ -233,7 +233,7 @@ html, body {
 .routine-card .card-meta {
   display: flex;
   gap: 16px;
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--muted);
   margin-top: 4px;
 }
@@ -620,7 +620,7 @@ html, body {
   font-size: 0.95rem;
 }
 .training-header .training-progress {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: #ffd700;
   font-weight: 700;
 }

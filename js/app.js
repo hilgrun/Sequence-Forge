@@ -43,7 +43,7 @@
     }
     container.innerHTML = allRoutines.map(r => {
       const est = estimateTotalDuration(r, allProjects);
-      const stepsCount = r.steps.length;
+      const stepsCount = r.steps.filter(s => s.kind === 'project').length;
       return `
         <div class="routine-card" data-id="${r.id}">
           <div class="card-title">${r.name || '未命名组'}</div>
