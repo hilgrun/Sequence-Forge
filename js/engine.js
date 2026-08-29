@@ -35,6 +35,7 @@
     load(routine, projects) {
       this.routine = routine;
       this.projects = projects;
+      this._totalActionSteps = routine.steps.filter(s => s.kind === 'project').length;// 计算总动作数（排除休息块）
       this.state = STATE.IDLE;
       this._resetCounters();
       return this;
@@ -277,7 +278,7 @@
         groupRound: this.currentRound + 1,
         totalGroupRounds: this.routine.rounds,
         stepIndex: stepIndex + 1,
-        totalSteps: totalSteps,
+        totalSteps: this._totalActionSteps,  // 改为只统计动作
         stepRound: this.currentStepRound + 1,
         totalStepRounds: step.rounds || 1,
         rep: this.currentRep + 1,
