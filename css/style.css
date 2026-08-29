@@ -1,0 +1,815 @@
+/* ==================== 全局重置 & 变量 ==================== */
+:root {
+  --bg: #0d1117;
+  --card: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --primary: #2ea043;
+  --primary-dark: #238636;
+  --secondary: #d29922;
+  --danger: #da3633;
+  --accent: #58a6ff;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+  user-select: none;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ==================== 视图切换 ==================== */
+.view {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+  padding: 12px 16px 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  overflow: hidden;
+  animation: fadeIn 0.25s ease;
+}
+.view.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hidden { display: none !important; }
+
+/* ==================== 通用组件 ==================== */
+.btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  font-family: inherit;
+  transition: transform 0.1s, opacity 0.2s, background 0.2s;
+  min-height: 44px;
+  flex: 1;
+}
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.primary { background: var(--primary); }
+.btn.primary:hover { background: var(--primary-dark); }
+.btn.secondary { background: var(--secondary); color: #000; }
+.btn.danger { background: var(--danger); }
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; min-height: 32px; flex: 0; }
+.btn-sm.danger { background: var(--danger); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+
+.field {
+  margin-bottom: 14px;
+}
+.field label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.field input[type="text"],
+.field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+.field textarea { resize: vertical; }
+
+.slider-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.slider-box input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+.slider-box span {
+  width: 60px;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.stepper span {
+  font-size: 1.2rem;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: center;
+}
+.btn-stepper {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  font-size: 1.2rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.btn-stepper:active { background: var(--border); }
+
+.empty-state {
+  color: var(--muted);
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 0.9rem;
+}
+
+/* ==================== 视图 1: 主页 ==================== */
+.app-header {
+  text-align: center;
+  flex-shrink: 0;
+  padding-bottom: 12px;
+}
+.app-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+.app-header .subtitle {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.home-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 12px;
+}
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ===== 训练组卡片（含编辑按钮） ===== */
+.routine-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+.routine-card:active { transform: scale(0.98); }
+.routine-card .card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding-right: 40px;
+}
+.routine-card .card-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.routine-card .card-badge {
+  display: inline-block;
+  background: var(--bg);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  color: var(--text);
+}
+.routine-card .card-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+}
+.routine-card .btn-edit-routine,
+.routine-card .btn-copy-routine,
+.routine-card .btn-delete-routine {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.routine-card .btn-edit-routine:hover,
+.routine-card .btn-copy-routine:hover,
+.routine-card .btn-delete-routine:hover {
+  background: var(--border);
+}
+.routine-card .btn-delete-routine:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.home-footer {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* ==================== 视图 2: 项目设定 ==================== */
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-bottom: 12px;
+}
+.view-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.project-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.project-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.project-item .thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.project-item .info {
+  flex: 1;
+  min-width: 0;
+}
+.project-item .info .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.project-item .info .phases {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.phase-chip {
+  font-size: 0.6rem;
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.project-item .actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.project-item .actions button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* ===== 项目编辑抽屉 ===== */
+.drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  pointer-events: none;
+  z-index: 100;
+}
+.drawer .drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 1;
+}
+.drawer .drawer-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 85vh;
+  overflow-y: auto;
+  pointer-events: none;
+  z-index: 2;
+}
+.drawer.open {
+  pointer-events: auto;
+}
+.drawer.open .drawer-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.drawer.open .drawer-content {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ===== 相位芯片编辑 ===== */
+.phase-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+}
+.phase-chip-edit {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 4px 8px 4px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+.phase-chip-edit .duration-value {
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--card);
+  min-width: 32px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent);
+}
+.phase-chip-edit .duration-value:hover {
+  background: var(--border);
+}
+.phase-chip-edit .step-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.phase-chip-edit .step-btn:active {
+  background: var(--border);
+}
+.phase-chip-edit .del {
+  color: var(--danger);
+  cursor: pointer;
+  font-weight: 700;
+  margin-left: 2px;
+  padding: 0 4px;
+}
+.phase-chip-edit .del:hover {
+  color: #ff6666;
+}
+.phase-add-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn-chip {
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 4px 12px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.btn-chip:active { background: var(--border); }
+
+.image-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.image-upload-area input[type="file"] {
+  flex: 1;
+  min-width: 120px;
+}
+.image-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.drawer-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ==================== 视图 3: 训练组设定 ==================== */
+.routine-editor {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.routine-meta {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  flex-shrink: 0;
+}
+.field-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+.field-row .field {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.step-timeline {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+.step-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.step-card .step-index {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 24px;
+}
+.step-card .step-info {
+  flex: 1;
+  min-width: 0;
+}
+.step-card .step-info .step-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.step-card .step-info .step-detail {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.step-card .step-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.step-card .step-actions button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 4px;
+}
+.step-card.rest-step {
+  border-left: 3px solid var(--secondary);
+}
+.step-card.project-step {
+  border-left: 3px solid var(--accent);
+}
+
+.step-append-buttons {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 8px 0;
+}
+
+/* ==================== 视图 4: 训练执行（四分位） ==================== */
+.training-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+.training-header .training-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.training-header .training-progress {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.training-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  min-height: 0;
+}
+.quadrant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  text-align: center;
+}
+
+/* 左上：项目名 + 相位 + 备注 */
+.top-left .project-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.top-left .phase-label {
+  font-size: 1.2rem;
+  color: var(--accent);
+  font-weight: 600;
+  margin: 2px 0;
+}
+.top-left .training-note {
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+/* 右上：配图 */
+.top-right .training-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.top-right .training-image img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--bg);
+  display: none;
+}
+.top-right .image-hint {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 0.5rem;
+  color: var(--muted);
+  background: rgba(0,0,0,0.6);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* 左下：倒计时 */
+.bottom-left .countdown-big {
+  font-size: 3.8rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--text);
+}
+.bottom-left .countdown-label {
+  font-size: 1rem;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+/* 右下：呼吸红圈 */
+.bottom-right .circle-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bottom-right .circle-wrap svg {
+  width: 100%;
+  height: 100%;
+  max-width: 160px;
+  max-height: 160px;
+}
+#breath-circle {
+  transition: r 0.15s ease, fill 0.15s ease;
+}
+
+/* 训练底部 */
+.training-footer {
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.training-controls {
+  display: flex;
+  gap: 10px;
+}
+.training-controls .btn {
+  flex: 1;
+}
+.training-shortcuts {
+  text-align: center;
+  font-size: 0.6rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* ==================== 安装横幅 ==================== */
+#install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 999;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  max-width: 480px;
+  margin: 0 auto;
+}
+#install-banner.show { transform: translateY(0); }
+#install-banner p {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text);
+  margin: 0;
+}
+#install-banner .btn-install {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+#install-banner .btn-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* ==================== 响应式适配 ==================== */
+@media (max-height: 680px) {
+  .bottom-left .countdown-big { font-size: 2.8rem; }
+  .top-left .project-name { font-size: 0.95rem; }
+  .quadrant { padding: 4px; }
+  .view { padding: 8px 12px 12px; }
+}
+@media (max-height: 580px) {
+  .bottom-left .countdown-big { font-size: 2.2rem; }
+  .top-left .phase-label { font-size: 0.7rem; }
+  .top-left .training-note { font-size: 0.55rem; }
+  .training-header .training-title { font-size: 0.8rem; }
+}

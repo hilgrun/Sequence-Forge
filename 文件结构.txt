@@ -1,0 +1,21 @@
+Sequence Forge/
+│
+├── index.html                    # 单页应用入口（三屏容器：主页/设定/训练）
+├── manifest.json                 # PWA 清单（图标/主题/离线配置）
+├── sw.js                         # Service Worker（缓存所有静态资源）
+│
+├── css/
+│   └── style.css                 # 全局样式 + 暗色主题 + 四分位布局 + 卡片时间线
+│
+├── js/
+│   ├── app.js                    # 主控制器：路由切换（显示/隐藏三屏）、事件绑定
+│   ├── db.js                     # 数据层：IndexedDB 的 Project/Routine CRUD
+│   ├── engine.js                 # 训练引擎：四层嵌套状态机（Round/Step/StepRound/Phase）
+│   ├── audio.js                  # 音频合成器：升调/降调滑音 + hold 滴答声
+│   └── utils.js                  # 工具函数：Base64 图片处理、导入导出（JSON打包/解包）
+│
+├── icons/
+│   ├── icon-192.png              # 主图标（192x192）
+│   └── icon-512.png              # 主图标（512x512，含 maskable）
+│
+└── README.md                     # 项目说明 + 本地运行指引
