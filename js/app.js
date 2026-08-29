@@ -1,4 +1,4 @@
-// js/app.js - 主控制器（最终版，顶部显示 组/项目/循环 三个进度）
+// js/app.js - 主控制器（术语替换 + 追加动作三参数）
 (function() {
   'use strict';
   const { $, $$, toggleVisible, generateId, formatTime, minutesToSeconds, estimateTotalDuration, deepClone } = window.Utils;
@@ -61,7 +61,6 @@
       `;
     }).join('');
 
-    // 点击卡片主体 → 开始训练
     container.querySelectorAll('.routine-card').forEach(el => {
       el.addEventListener('click', (e) => {
         if (e.target.closest('.btn-edit-routine')) return;
@@ -73,7 +72,6 @@
       });
     });
 
-    // 编辑按钮 → 打开训练组编辑器
     container.querySelectorAll('.btn-edit-routine').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -81,7 +79,6 @@
       });
     });
 
-    // 复制按钮
     container.querySelectorAll('.btn-copy-routine').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -100,12 +97,10 @@
       });
     });
 
-    // ---- 删除按钮 ----
     container.querySelectorAll('.btn-delete-routine').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.dataset.id;
-        // 获取训练组名称用于确认提示
         const routine = await DB.getRoutine(id);
         if (!routine) {
           alert('训练组不存在');
@@ -120,12 +115,12 @@
     });
   }
 
-  // ---------- 渲染：项目列表 ----------
+  // ---------- 渲染：动作列表 ----------
   async function renderProjects() {
     allProjects = await DB.getAllProjects();
     const container = document.getElementById('project-list');
     if (!allProjects.length) {
-      container.innerHTML = '<div class="empty-state">还没有项目，点击「新建」创建</div>';
+      container.innerHTML = '<div class="empty-state">还没有动作，点击「新建动作」创建</div>';
       return;
     }
     container.innerHTML = allProjects.map(p => {
@@ -152,7 +147,7 @@
     }));
     container.querySelectorAll('.btn-delete-project').forEach(b => b.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (confirm('删除此项目？')) {
+      if (confirm('删除此动作？')) {
         await DB.deleteProject(b.dataset.id);
         renderProjects();
         renderHome();
@@ -160,7 +155,7 @@
     }));
   }
 
-  // ---------- 项目抽屉 ----------
+  // ---------- 动作抽屉 ----------
   async function openProjectDrawer(id = null) {
     editingProjectId = id;
     const title = document.getElementById('project-drawer-title');
@@ -175,7 +170,7 @@
     document.getElementById('btn-remove-image').style.display = 'none';
 
     if (id) {
-      title.textContent = '编辑项目';
+      title.textContent = '编辑动作';
       const p = await DB.getProject(id);
       if (p) {
         nameInput.value = p.name || '';
@@ -187,7 +182,7 @@
         editingPhases = p.phases.map(ph => ({ ...ph }));
       }
     } else {
-      title.textContent = '新建项目';
+      title.textContent = '新建动作';
       editingPhases = [];
     }
     renderPhaseChips();
@@ -283,7 +278,7 @@
 
   document.getElementById('btn-project-save').addEventListener('click', async () => {
     const name = document.getElementById('project-name').value.trim();
-    if (!name) { alert('请输入项目名'); return; }
+    if (!name) { alert('请输入动作名'); return; }
     if (!editingPhases.length) { alert('请至少添加一个相位'); return; }
 
     const note = document.getElementById('project-note').value.trim();
@@ -317,14 +312,12 @@
     const title = document.getElementById('routine-editor-title');
     const nameInput = document.getElementById('routine-name');
     const roundsSpan = document.getElementById('routine-rounds');
-    const restSlider = document.getElementById('routine-rest-between');
-    const restVal = document.getElementById('routine-rest-between-val');
     const countdownSlider = document.getElementById('routine-countdown');
     const countdownVal = document.getElementById('routine-countdown-val');
 
     allProjects = await DB.getAllProjects();
 
-    let routine = { id: null, name: '', rounds: 3, restBetweenRounds: 2, countdown: 3, steps: [] };
+    let routine = { id: null, name: '', rounds: 3, countdown: 3, steps: [] };
     if (id) {
       const found = await DB.getRoutine(id);
       if (found) routine = found;
@@ -336,8 +329,6 @@
     currentRoutineId = routine.id;
     nameInput.value = routine.name || '';
     roundsSpan.textContent = routine.rounds || 3;
-    restSlider.value = routine.restBetweenRounds || 2;
-    restVal.textContent = (routine.restBetweenRounds || 2).toFixed(1) + ' min';
     countdownSlider.value = routine.countdown || 3;
     countdownVal.textContent = (routine.countdown || 3) + ' s';
 
@@ -353,10 +344,17 @@
     }
     container.innerHTML = steps.map((step, idx) => {
       const isRest = step.kind === 'rest';
-      const name = isRest ? '🛑 休息' : (allProjects.find(p => p.id === step.projectId)?.name || '未命名项目');
-      const detail = isRest
-        ? `${step.duration} min`
-        : `×${step.rounds} · 组间短歇 ${step.restAfter || 0} min`;
+      let name, detail;
+      if (isRest) {
+        name = '🛑 休息';
+        detail = `${step.duration} min`;
+      } else {
+        const project = allProjects.find(p => p.id === step.projectId);
+        name = project?.name || '未命名动作';
+        const groups = step.rounds || 1;
+        const reps = step.reps || 1;
+        detail = `${groups}组 ×${reps}次 · 组间休息 ${step.restAfter || 0} min`;
+      }
       const note = step.note ? ` 💬 ${step.note}` : '';
       return `
         <div class="step-card ${isRest ? 'rest-step' : 'project-step'}">
@@ -389,11 +387,15 @@
             renderSteps(window._currentSteps);
           }
         } else {
-          const rounds = prompt('循环次数：', step.rounds);
-          if (rounds !== null && !isNaN(parseInt(rounds)) && parseInt(rounds) > 0) {
-            step.rounds = parseInt(rounds);
+          const groups = prompt('组数：', step.rounds);
+          if (groups !== null && !isNaN(parseInt(groups)) && parseInt(groups) > 0) {
+            step.rounds = parseInt(groups);
           }
-          const rest = prompt('组间短歇（分钟）：', step.restAfter);
+          const reps = prompt('每组次数：', step.reps || 1);
+          if (reps !== null && !isNaN(parseInt(reps)) && parseInt(reps) > 0) {
+            step.reps = parseInt(reps);
+          }
+          const rest = prompt('组间休息（分钟）：', step.restAfter);
           if (rest !== null && !isNaN(parseFloat(rest)) && parseFloat(rest) >= 0) {
             step.restAfter = parseFloat(rest);
           }
@@ -423,30 +425,66 @@
     renderSteps(steps);
   }
 
+  // ---- 追加动作（三参数：组数、每组次数、组间休息） ----
   document.getElementById('btn-append-project').addEventListener('click', () => {
     const steps = window._currentSteps;
     if (!allProjects.length) {
-      alert('请先创建训练项目');
+      alert('请先创建动作');
       return;
     }
+
     const names = allProjects.map((p, i) => `${i+1}. ${p.name}`).join('\n');
-    const choice = prompt(`选择项目（输入编号）：\n${names}`);
+    const choice = prompt(`选择动作（输入编号）：\n${names}`);
     if (!choice) return;
     const idx = parseInt(choice) - 1;
-    if (isNaN(idx) || idx < 0 || idx >= allProjects.length) { alert('无效编号'); return; }
+    if (isNaN(idx) || idx < 0 || idx >= allProjects.length) {
+      alert('无效编号');
+      return;
+    }
     const project = allProjects[idx];
+
+    const groupInput = prompt('组数（1-99）：', '3');
+    if (groupInput === null) return;
+    const groups = parseInt(groupInput);
+    if (isNaN(groups) || groups < 1 || groups > 99) {
+      alert('请输入 1-99 之间的数字');
+      return;
+    }
+
+    const repsInput = prompt('每组次数（1-99）：', '12');
+    if (repsInput === null) return;
+    const reps = parseInt(repsInput);
+    if (isNaN(reps) || reps < 1 || reps > 99) {
+      alert('请输入 1-99 之间的数字');
+      return;
+    }
+
+    let restBetween = 0;
+    const restInput = prompt('组间休息（分钟，输入0表示无休息）：', '1');
+    if (restInput === null) return;
+    const restVal = parseFloat(restInput);
+    if (isNaN(restVal) || restVal < 0) {
+      alert('请输入有效的分钟数');
+      return;
+    }
+    restBetween = restVal;
+
     steps.push({
       kind: 'project',
       projectId: project.id,
-      rounds: 3,
-      restAfter: 5,
+      rounds: groups,
+      reps: reps,
+      restAfter: restBetween,
       note: ''
     });
+
+    // 自动追加休息块
     steps.push({
       kind: 'rest',
       duration: 5,
-      note: '自动恢复'
+      note: '动作后恢复'
     });
+
     renderSteps(steps);
   });
 
@@ -465,7 +503,6 @@
     const name = document.getElementById('routine-name').value.trim();
     if (!name) { alert('请输入组名'); return; }
     const rounds = parseInt(document.getElementById('routine-rounds').textContent);
-    const restBetweenRounds = parseFloat(document.getElementById('routine-rest-between').value);
     const countdown = parseInt(document.getElementById('routine-countdown').value);
     const steps = window._currentSteps || [];
     if (!steps.length) { alert('请至少添加一个步骤'); return; }
@@ -474,7 +511,6 @@
       id: currentRoutineId || generateId(),
       name,
       rounds,
-      restBetweenRounds,
       countdown: countdown || 0,
       steps: steps.map(s => deepClone(s))
     };
@@ -494,9 +530,6 @@
       if (val > 99) val = 99;
       span.textContent = val;
     });
-  });
-  document.getElementById('routine-rest-between').addEventListener('input', function() {
-    document.getElementById('routine-rest-between-val').textContent = parseFloat(this.value).toFixed(1) + ' min';
   });
   document.getElementById('routine-countdown').addEventListener('input', function() {
     document.getElementById('routine-countdown-val').textContent = parseInt(this.value) + ' s';
@@ -519,7 +552,7 @@
       return;
     }
     const projects = await DB.getAllProjects();
-    if (!projects.length) { alert('没有可用的训练项目'); return; }
+    if (!projects.length) { alert('没有可用的训练动作'); return; }
 
     navigateTo('view-training');
     document.getElementById('training-title').textContent = routine.name || '训练';
@@ -549,13 +582,13 @@
           document.getElementById('btn-training-start').classList.add('hidden');
           document.getElementById('btn-training-pause').classList.remove('hidden');
           document.getElementById('btn-training-stop').classList.remove('hidden');
-          document.getElementById('training-progress').textContent = '1/1 · 项目 0/0 · 循环 0/0';
+          document.getElementById('training-progress').textContent = '1/1 · 动作 0/0 · 组 0/0 · 次 0/0';
         },
         onRoundChange: (data) => {
-          // 组进度变更，但 onPhaseChange 会覆盖，这里不重复处理
+          // 组进度变更，但 onPhaseChange 会覆盖
         },
         onStepChange: (data) => {
-          // 项目进度变更，但 onPhaseChange 会覆盖
+          // 动作进度变更
         },
         onCountdownTick: (data) => {
           const remaining = Math.ceil(data.remaining);
@@ -563,9 +596,8 @@
           document.getElementById('training-project-name').textContent = '准备';
           document.getElementById('training-phase-label').textContent = `${remaining}s`;
         },
-
         onPhaseChange: (data) => {
-          console.log('🔄 相位切换:', data.phase.type, '项目:', data.project?.name);
+          console.log('🔄 相位切换:', data.phase.type, '动作:', data.project?.name);
           const phase = data.phase;
           const project = data.project;
           const step = data.step;
@@ -575,7 +607,7 @@
           const note = step?.note || project?.defaultNote || '';
           document.getElementById('training-note').textContent = note ? `💬 ${note}` : '';
 
-          // ---- 图片更新：只有项目切换时才重新加载 ----
+          // 图片更新：只有动作切换时才重新加载
           const img = document.getElementById('training-image-img');
           const newProjectId = project?.id || null;
           if (newProjectId !== currentProjectId) {
@@ -589,13 +621,13 @@
             }
           }
 
-          // 顶部信息
-          const groupText = `${data.groupRound || 1}/${data.totalGroupRounds || 1}`;
-          const stepText = `项目 ${data.stepIndex || 1}/${data.totalSteps || 1}`;
-          const roundText = `循环 ${data.stepRound || 1}/${data.totalStepRounds || 1}`;
-          document.getElementById('training-progress').textContent = `${groupText} · ${stepText} · ${roundText}`;
+          // 顶部信息：循环 · 动作 · 组 · 次
+          const roundText = `${data.groupRound || 1}/${data.totalGroupRounds || 1}`;
+          const stepText = `动作 ${data.stepIndex || 1}/${data.totalSteps || 1}`;
+          const groupText = `组 ${data.stepRound || 1}/${data.totalStepRounds || 1}`;
+          const repText = `次 ${data.rep || 1}/${data.totalReps || 1}`;
+          document.getElementById('training-progress').textContent = `${roundText} · ${stepText} · ${groupText} · ${repText}`;
         },
-        
         onTick: (data) => {
           const remainingInt = Math.ceil(data.remaining);
           document.getElementById('training-countdown').textContent = remainingInt;
@@ -632,7 +664,7 @@
         onRestStart: (data) => {
           document.getElementById('training-project-name').textContent = '🛑 休息';
           document.getElementById('training-phase-label').textContent = `${data.type.toUpperCase()} 休息`;
-          document.getElementById('training-note').textContent = data.type === 'round' ? '组间大休' : '恢复中';
+          document.getElementById('training-note').textContent = data.type === 'round' ? '循环间大休' : '组间休息';
           document.getElementById('training-image-img').style.display = 'none';
           document.getElementById('training-countdown').textContent = Math.ceil(data.remaining);
           document.getElementById('training-total-progress').style.width = '0%';
@@ -665,7 +697,7 @@
     });
 
     trainingEngine.load(routine, projects);
-    console.log('📦 引擎已加载，训练组:', routine.name, '项目数:', projects.length);
+    console.log('📦 引擎已加载，训练组:', routine.name, '动作数:', projects.length);
 
     const startBtn = document.getElementById('btn-training-start');
     startBtn.replaceWith(startBtn.cloneNode(true));
@@ -754,12 +786,11 @@
     renderSteps([]);
   });
 
-  // ---------- PWA 安装（完整强化版）----------
+  // ---------- PWA 安装 ----------
   (function initPWA() {
     let deferredPrompt = null;
     const installBanner = document.getElementById('install-banner');
     
-    // 检查是否已安装
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || window.navigator.standalone 
       || document.referrer.includes('android-app://');
@@ -767,7 +798,6 @@
     console.log('📱 PWA 检测: isStandalone =', isStandalone);
 
     if (!isStandalone) {
-      // beforeinstallprompt 必须在页面加载前绑定
       window.addEventListener('beforeinstallprompt', (e) => {
         console.log('📲 beforeinstallprompt 触发！');
         e.preventDefault();
@@ -781,7 +811,6 @@
         installBanner.classList.remove('show');
       });
 
-      // 如果页面加载后 3 秒还没触发 beforeinstallprompt，可能不会触发了
       setTimeout(() => {
         if (!deferredPrompt && !installBanner.classList.contains('show')) {
           console.log('ℹ️ beforeinstallprompt 未触发，可能已在独立模式或浏览器不支持');
@@ -789,7 +818,6 @@
       }, 3000);
     }
 
-    // 安装按钮
     const btnInstall = document.getElementById('btn-install');
     if (btnInstall) {
       btnInstall.addEventListener('click', async () => {
@@ -812,7 +840,6 @@
       });
     }
 
-    // 关闭横幅
     const btnClose = document.getElementById('btn-close-banner');
     if (btnClose) {
       btnClose.addEventListener('click', () => {
@@ -820,7 +847,6 @@
       });
     }
 
-    // SW 状态检查
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(() => {
         console.log('✅ SW 就绪，PWA 可安装');
@@ -830,11 +856,7 @@
     }
   })();
 
-  
-
-  // ---------- 数据导入 / 导出（跨设备迁移）----------
-
-  // 1. 导出数据
+  // ---------- 数据导入 / 导出 ----------
   document.getElementById('btn-export-data').addEventListener('click', async () => {
     try {
       const json = await DB.exportData();
@@ -855,9 +877,7 @@
     }
   });
 
-  // 2. 导入数据
   document.getElementById('btn-import-data').addEventListener('click', () => {
-    // 创建隐藏的文件选择器
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -868,7 +888,6 @@
       reader.onload = async (ev) => {
         try {
           const jsonStr = ev.target.result;
-          // 校验数据格式
           const test = JSON.parse(jsonStr);
           if (!test.projects || !test.routines) {
             throw new Error('无效的备份文件格式');
@@ -877,7 +896,6 @@
             await DB.importData(jsonStr);
             alert('✅ 数据导入成功！页面即将刷新。');
             await renderHome();
-            // 刷新页面以确保所有状态重置
             window.location.reload();
           }
         } catch (err) {
@@ -889,7 +907,7 @@
     };
     input.click();
   });
-  
+
   // ---------- 初始化 ----------
   async function init() {
     document.addEventListener('click', () => AudioEngine.ensure(), { once: true });

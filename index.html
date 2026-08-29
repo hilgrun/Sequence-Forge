@@ -7,7 +7,6 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
   <title>Sequence Forge</title>
   <meta name="description" content="Forge your training sequence">
   <link rel="manifest" href="manifest.json">
@@ -33,7 +32,7 @@
     </main>
 
     <footer class="home-footer">
-      <button id="btn-manage-projects" class="btn secondary">📋 管理项目</button>
+      <button id="btn-manage-projects" class="btn secondary">📋 管理动作</button>
       <button id="btn-new-routine" class="btn primary">📝 新建训练组</button>
       <button id="btn-export-data" class="btn secondary" style="flex:0.6;">⬇️ 导出</button>
       <button id="btn-import-data" class="btn secondary" style="flex:0.6;">⬆️ 导入</button>
@@ -41,26 +40,26 @@
   </section>
 
   <!-- ============================================================ -->
-  <!-- 视图 2: 项目设定页                                             -->
+  <!-- 视图 2: 动作设定页                                             -->
   <!-- ============================================================ -->
   <section id="view-projects" class="view">
     <header class="view-header">
       <button class="btn-back" data-target="home">← 返回</button>
-      <h2>训练项目</h2>
-      <button id="btn-new-project" class="btn-icon">＋ 新建</button>
+      <h2>动作库</h2>
+      <button id="btn-new-project" class="btn-icon">＋ 新建动作</button>
     </header>
 
     <main class="project-list" id="project-list">
-      <div class="empty-state">还没有项目，点击「新建」创建</div>
+      <div class="empty-state">还没有动作，点击「新建动作」创建</div>
     </main>
 
-    <!-- 项目编辑抽屉 -->
+    <!-- 动作编辑抽屉 -->
     <div id="project-drawer" class="drawer">
       <div class="drawer-content">
-        <h3 id="project-drawer-title">编辑项目</h3>
+        <h3 id="project-drawer-title">编辑动作</h3>
         <div class="drawer-body">
           <div class="field">
-            <label>项目名</label>
+            <label>动作名</label>
             <input type="text" id="project-name" placeholder="例如：慢深蹲">
           </div>
 
@@ -116,22 +115,13 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>总循环</label>
+            <label>循环次数</label>
             <div class="stepper">
               <button class="btn-stepper" data-target="rounds" data-dir="-1">−</button>
-              <span id="routine-rounds">4</span>
+              <span id="routine-rounds">3</span>
               <button class="btn-stepper" data-target="rounds" data-dir="1">＋</button>
             </div>
           </div>
-          <div class="field">
-            <label>组循环间休息</label>
-            <div class="slider-box">
-              <input type="range" id="routine-rest-between" min="0" max="15" step="0.5" value="2">
-              <span id="routine-rest-between-val">2.0 min</span>
-            </div>
-          </div>
-        </div>
-        <div class="field-row">
           <div class="field">
             <label>开始倒计时</label>
             <div class="slider-box">
@@ -149,7 +139,7 @@
 
       <!-- 底部追加按钮 -->
       <div class="step-append-buttons">
-        <button id="btn-append-project" class="btn secondary">＋ 追加项目</button>
+        <button id="btn-append-project" class="btn secondary">＋ 追加动作</button>
         <button id="btn-append-rest" class="btn secondary">＋ 追加休息</button>
       </div>
     </main>
@@ -174,7 +164,7 @@
 
       <div class="quadrant top-right">
         <div id="training-image" class="training-image">
-          <img id="training-image-img" src="" alt="项目配图">
+          <img id="training-image-img" src="" alt="动作配图">
         </div>
       </div>
 
@@ -192,7 +182,6 @@
       </div>
     </main>
 
-    <!-- 训练页底部，确保进度条元素存在 -->
     <footer class="training-footer">
       <div class="progress-bar">
         <div id="training-total-progress" class="progress-fill" style="width: 0%"></div>

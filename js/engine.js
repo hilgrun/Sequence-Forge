@@ -1,4 +1,4 @@
-// js/engine.js - 四层嵌套训练状态机（最终版，传递完整进度信息）
+// js/engine.js - 四层嵌套训练状态机（增加 reps 层）
 (function() {
   'use strict';
 
@@ -17,10 +17,11 @@
       this.volume = options.volume ?? 0.8;
 
       this.state = STATE.IDLE;
-      this.currentRound = 0;
-      this.currentStepIndex = 0;
-      this.currentStepRound = 0;
-      this.currentPhaseIndex = 0;
+      this.currentRound = 0;         // 循环次数（训练组级别）
+      this.currentStepIndex = 0;     // 当前动作索引
+      this.currentStepRound = 0;     // 当前动作的组数
+      this.currentRep = 0;           // 当前组内的次数
+      this.currentPhaseIndex = 0;    // 当前相位索引
       this.phaseElapsed = 0;
       this.phaseRemaining = 0;
 
@@ -43,6 +44,7 @@
       this.currentRound = 0;
       this.currentStepIndex = 0;
       this.currentStepRound = 0;
+      this.currentRep = 0;
       this.currentPhaseIndex = 0;
       this.phaseElapsed = 0;
       this.phaseRemaining = 0;
@@ -110,7 +112,7 @@
       this._trigger('onStop', {});
     }
 
-    // ---------- 倒计时（带滴滴声）----------
+    // ---------- 倒计时 ----------
     _startCountdown(totalSeconds, onComplete) {
       this._isCountdown = true;
       let elapsed = 0;
@@ -161,16 +163,6 @@
 
     _runStep() {
       if (this.currentStepIndex >= this.routine.steps.length) {
-        if (this.currentRound < this.routine.rounds - 1) {
-          const rest = this.routine.restBetweenRounds || 0;
-          if (rest > 0) {
-            this._startRest(rest * 60, 'round', () => {
-              this.currentRound++;
-              this._runRound();
-            });
-            return;
-          }
-        }
         this.currentRound++;
         this._runRound();
         return;
@@ -178,6 +170,7 @@
 
       const step = this.routine.steps[this.currentStepIndex];
       this.currentStepRound = 0;
+      this.currentRep = 0;
       this._trigger('onStepChange', {
         index: this.currentStepIndex + 1,
         total: this.routine.steps.length,
@@ -186,8 +179,11 @@
       this._runStepRound(step);
     }
 
+    // ---------- 组数循环 + 次数循环（三层嵌套）----------
     _runStepRound(step) {
+      // 检查组数是否完成
       if (this.currentStepRound >= (step.rounds || 1)) {
+        // 所有组完成 → 进入下一步骤
         const isLastStep = this.currentStepIndex === this.routine.steps.length - 1;
         const isLastRound = this.currentRound === this.routine.rounds - 1;
         if (isLastStep && isLastRound) {
@@ -199,6 +195,7 @@
         return;
       }
 
+      // 如果是休息块
       if (step.kind === 'rest') {
         const dur = step.duration || 0;
         this._startRest(dur * 60, 'step', () => {
@@ -208,10 +205,29 @@
         return;
       }
 
+      // 检查当前组内的次数是否完成
+      const reps = step.reps || 1;
+      if (this.currentRep >= reps) {
+        // 当前组次数完成 → 进入下一组
+        this.currentRep = 0;
+        this.currentStepRound++;
+
+        // 组间休息（最后一组不休息）
+        if (this.currentStepRound < step.rounds && step.restAfter > 0) {
+          this._startRest(step.restAfter * 60, 'step', () => {
+            this._runStepRound(step);
+          });
+          return;
+        }
+        this._runStepRound(step);
+        return;
+      }
+
+      // 执行动作（找项目）
       const project = this.projects.find(p => p.id === step.projectId);
       if (!project) {
-        console.warn(`⚠️ 找不到项目 ${step.projectId}，跳过`);
-        this.currentStepRound++;
+        console.warn(`⚠️ 找不到动作 ${step.projectId}，跳过`);
+        this.currentRep++;
         this._runStepRound(step);
         return;
       }
@@ -221,28 +237,19 @@
         project: project,
         step: step,
         round: this.currentStepRound + 1,
-        totalRounds: step.rounds || 1
+        totalRounds: step.rounds || 1,
+        rep: this.currentRep + 1,
+        totalReps: reps
       });
 
       this._runPhase(project, step, () => {
-        this.currentStepRound++;
-
-        if (this.currentStepRound < (step.rounds || 1)) {
-          const restAfter = step.restAfter || 0;
-          if (restAfter > 0) {
-            this._startRest(restAfter * 60, 'step', () => {
-              this._runStepRound(step);
-            });
-            return;
-          }
-          this._runStepRound(step);
-        } else {
-          this._runStepRound(step);
-        }
+        // 一次相位序列完成 → 次数+1
+        this.currentRep++;
+        this._runStepRound(step);
       }, this.currentStepIndex, this.routine.steps.length);
     }
 
-    // ---------- 相位执行（传递完整进度）----------
+    // ---------- 相位执行 ----------
     _runPhase(project, step, onComplete, stepIndex, totalSteps) {
       if (this.currentPhaseIndex >= project.phases.length) {
         if (onComplete) onComplete();
@@ -260,21 +267,21 @@
       this.currentPhase = phase;
       this.phaseRemaining = 0;
 
+      const reps = step.reps || 1;
       this._trigger('onPhaseChange', {
         phase: phase,
         project: project,
         step: step,
         index: this.currentPhaseIndex + 1,
         total: project.phases.length,
-        // 组进度
         groupRound: this.currentRound + 1,
         totalGroupRounds: this.routine.rounds,
-        // 项目顺序
         stepIndex: stepIndex + 1,
         totalSteps: totalSteps,
-        // 项目内循环
         stepRound: this.currentStepRound + 1,
-        totalStepRounds: step.rounds || 1
+        totalStepRounds: step.rounds || 1,
+        rep: this.currentRep + 1,
+        totalReps: reps
       });
 
       this._startPhaseWithDuration(phase, duration, false, () => {
@@ -355,7 +362,7 @@
       }
     }
 
-    // ---------- 休息（最后10秒滴滴声）----------
+    // ---------- 休息 ----------
     _startRest(totalSeconds, type, onComplete) {
       if (totalSeconds <= 0) {
         if (onComplete) onComplete();
