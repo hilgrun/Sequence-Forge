@@ -502,6 +502,7 @@
     document.getElementById('routine-countdown-val').textContent = parseInt(this.value) + ' s';
   });
 
+  let currentProjectId = null;
   // ---------- 训练执行 ----------
   async function startTraining(routineId) {
     console.log('🔍 startTraining 被调用, routineId:', routineId);
@@ -562,6 +563,7 @@
           document.getElementById('training-project-name').textContent = '准备';
           document.getElementById('training-phase-label').textContent = `${remaining}s`;
         },
+
         onPhaseChange: (data) => {
           console.log('🔄 相位切换:', data.phase.type, '项目:', data.project?.name);
           const phase = data.phase;
@@ -573,21 +575,27 @@
           const note = step?.note || project?.defaultNote || '';
           document.getElementById('training-note').textContent = note ? `💬 ${note}` : '';
 
+          // ---- 图片更新：只有项目切换时才重新加载 ----
           const img = document.getElementById('training-image-img');
-          if (project && project.imageData && project.imageData.startsWith('data:image')) {
-            img.src = project.imageData;
-            img.style.display = 'block';
-          } else {
-            img.style.display = 'none';
-            img.src = '';
+          const newProjectId = project?.id || null;
+          if (newProjectId !== currentProjectId) {
+            currentProjectId = newProjectId;
+            if (project && project.imageData && project.imageData.startsWith('data:image')) {
+              img.src = project.imageData;
+              img.style.display = 'block';
+            } else {
+              img.style.display = 'none';
+              img.src = '';
+            }
           }
 
-          // ---- 顶部信息：总循环 / 项目顺序 / 组数 ----
+          // 顶部信息
           const groupText = `${data.groupRound || 1}/${data.totalGroupRounds || 1}`;
           const stepText = `项目 ${data.stepIndex || 1}/${data.totalSteps || 1}`;
           const roundText = `循环 ${data.stepRound || 1}/${data.totalStepRounds || 1}`;
           document.getElementById('training-progress').textContent = `${groupText} · ${stepText} · ${roundText}`;
         },
+        
         onTick: (data) => {
           const remainingInt = Math.ceil(data.remaining);
           document.getElementById('training-countdown').textContent = remainingInt;
