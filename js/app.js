@@ -830,6 +830,66 @@
     }
   })();
 
+  
+
+  // ---------- 数据导入 / 导出（跨设备迁移）----------
+
+  // 1. 导出数据
+  document.getElementById('btn-export-data').addEventListener('click', async () => {
+    try {
+      const json = await DB.exportData();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `sequence_forge_backup_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      alert('✅ 数据导出成功！');
+    } catch (e) {
+      alert('❌ 导出失败: ' + e.message);
+      console.error(e);
+    }
+  });
+
+  // 2. 导入数据
+  document.getElementById('btn-import-data').addEventListener('click', () => {
+    // 创建隐藏的文件选择器
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const jsonStr = ev.target.result;
+          // 校验数据格式
+          const test = JSON.parse(jsonStr);
+          if (!test.projects || !test.routines) {
+            throw new Error('无效的备份文件格式');
+          }
+          if (confirm('导入将覆盖当前所有数据，确定继续吗？')) {
+            await DB.importData(jsonStr);
+            alert('✅ 数据导入成功！页面即将刷新。');
+            await renderHome();
+            // 刷新页面以确保所有状态重置
+            window.location.reload();
+          }
+        } catch (err) {
+          alert('❌ 导入失败: ' + err.message);
+          console.error(err);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  });
+  
   // ---------- 初始化 ----------
   async function init() {
     document.addEventListener('click', () => AudioEngine.ensure(), { once: true });
