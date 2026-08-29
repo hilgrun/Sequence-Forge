@@ -426,6 +426,7 @@
   }
 
   // ---- 追加动作（三参数：组数、每组次数、组间休息） ----
+  // ---- 追加动作（三参数：组数、每组次数、组间休息） ----
   document.getElementById('btn-append-project').addEventListener('click', () => {
     const steps = window._currentSteps;
     if (!allProjects.length) {
@@ -459,15 +460,19 @@
       return;
     }
 
+    // ---- 组间休息：仅当组数 > 1 时才询问 ----
     let restBetween = 0;
-    const restInput = prompt('组间休息（分钟，输入0表示无休息）：', '1');
-    if (restInput === null) return;
-    const restVal = parseFloat(restInput);
-    if (isNaN(restVal) || restVal < 0) {
-      alert('请输入有效的分钟数');
-      return;
+    if (groups > 1) {
+      const restInput = prompt('组间休息（分钟，输入0表示无休息）：', '1');
+      if (restInput === null) return;
+      const restVal = parseFloat(restInput);
+      if (isNaN(restVal) || restVal < 0) {
+        alert('请输入有效的分钟数');
+        return;
+      }
+      restBetween = restVal;
     }
-    restBetween = restVal;
+    // 组数 = 1 时，restBetween 保持 0，不弹窗
 
     steps.push({
       kind: 'project',
@@ -478,7 +483,6 @@
       note: ''
     });
 
-    // 自动追加休息块
     steps.push({
       kind: 'rest',
       duration: 5,
