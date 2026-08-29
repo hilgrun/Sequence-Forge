@@ -620,7 +620,7 @@ html, body {
   font-size: 0.95rem;
 }
 .training-header .training-progress {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: #ffd700;
   font-weight: 700;
 }
