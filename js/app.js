@@ -754,33 +754,81 @@
     renderSteps([]);
   });
 
-  // ---------- PWA 安装 ----------
-  let deferredPrompt = null;
-  const installBanner = document.getElementById('install-banner');
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  // ---------- PWA 安装（完整强化版）----------
+  (function initPWA() {
+    let deferredPrompt = null;
+    const installBanner = document.getElementById('install-banner');
+    
+    // 检查是否已安装
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || window.navigator.standalone 
+      || document.referrer.includes('android-app://');
 
-  if (!isStandalone) {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installBanner.classList.add('show');
-    });
-  }
+    console.log('📱 PWA 检测: isStandalone =', isStandalone);
 
-  document.getElementById('btn-install').addEventListener('click', async () => {
-    if (!deferredPrompt) {
-      alert('请在浏览器菜单中使用 "添加到主屏幕" 或 "安装应用"');
-      return;
+    if (!isStandalone) {
+      // beforeinstallprompt 必须在页面加载前绑定
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('📲 beforeinstallprompt 触发！');
+        e.preventDefault();
+        deferredPrompt = e;
+        installBanner.classList.add('show');
+      });
+
+      window.addEventListener('appinstalled', () => {
+        console.log('✅ 应用已安装');
+        deferredPrompt = null;
+        installBanner.classList.remove('show');
+      });
+
+      // 如果页面加载后 3 秒还没触发 beforeinstallprompt，可能不会触发了
+      setTimeout(() => {
+        if (!deferredPrompt && !installBanner.classList.contains('show')) {
+          console.log('ℹ️ beforeinstallprompt 未触发，可能已在独立模式或浏览器不支持');
+        }
+      }, 3000);
     }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    installBanner.classList.remove('show');
-  });
 
-  document.getElementById('btn-close-banner').addEventListener('click', () => {
-    installBanner.classList.remove('show');
-  });
+    // 安装按钮
+    const btnInstall = document.getElementById('btn-install');
+    if (btnInstall) {
+      btnInstall.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          if (isIOS) {
+            alert('请点击 Safari 底部分享按钮 → 「添加到主屏幕」');
+          } else {
+            alert('请在浏览器菜单中点击「安装应用」或「添加到主屏幕」');
+          }
+          return;
+        }
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('📲 安装结果:', outcome);
+        deferredPrompt = null;
+        if (outcome === 'accepted') {
+          installBanner.classList.remove('show');
+        }
+      });
+    }
+
+    // 关闭横幅
+    const btnClose = document.getElementById('btn-close-banner');
+    if (btnClose) {
+      btnClose.addEventListener('click', () => {
+        installBanner.classList.remove('show');
+      });
+    }
+
+    // SW 状态检查
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        console.log('✅ SW 就绪，PWA 可安装');
+      }).catch(err => {
+        console.warn('⚠️ SW 未就绪:', err);
+      });
+    }
+  })();
 
   // ---------- 初始化 ----------
   async function init() {
