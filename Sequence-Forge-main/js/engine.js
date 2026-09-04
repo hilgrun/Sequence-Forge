@@ -188,6 +188,7 @@
       }
       console.log(`🔄 [_runRound] 开始第 ${this.currentRound + 1}/${this.routine.rounds} 轮`);
 
+      // ---- 每个循环重置动作播报记录 ----
       this._actionSpoken = new Set();
 
       this.state = STATE.WAITING_VOICE;
@@ -242,6 +243,9 @@
         return;
       }
 
+      // ============================================================
+      // 休息块（动作间休息）－ type: 'action'
+      // ============================================================
       if (step.kind === 'rest') {
         const dur = step.duration || 0;
         console.log(`🛑 [_runStepRound] 休息块 ${dur}分钟`);
@@ -258,6 +262,9 @@
         console.log(`✅ [_runStepRound] 当前组次数完成 (${this.currentRep}/${reps})，进入下一组`);
         this.currentRep = 0;
         this.currentStepRound++;
+        // ============================================================
+        // 组间休息 － type: 'group'
+        // ============================================================
         if (this.currentStepRound < step.rounds && step.restAfter > 0) {
           console.log(`🛑 [_runStepRound] 组间休息 ${step.restAfter}分钟`);
           this._startRest(step.restAfter * 60, 'group', () => {
@@ -427,7 +434,9 @@
       }
     }
 
-    // ★ 修改：_startRest 增加 nextStep 计算与传递
+    // ================================================================
+    // 休息语音播报 － 你可以在这里自定义播报文案
+    // ================================================================
     _startRest(totalSeconds, type, onComplete) {
       console.log(`🛑 [_startRest] 开始休息, type: ${type}, seconds: ${totalSeconds}`);
 
@@ -441,35 +450,33 @@
       this._stopAudio();
       this._lastBeepSecond = -1;
 
-      // ★ 新增：计算下一步骤（仅当 type === 'action' 时）
-      let nextStep = null;
-      if (type === 'action') {
-        const nextIndex = this.currentStepIndex + 1;
-        if (nextIndex < this.routine.steps.length) {
-          nextStep = this.routine.steps[nextIndex];
-        }
-      }
-
       const SpeechEngine = window.SpeechEngine;
       if (SpeechEngine) {
+        // ============================================================
+        // ★★★ 自定义播报文案区域 ★★★
+        // 你可以修改下面每个 case 中的字符串内容来改变播报语音
+        // ============================================================
         let restMsg;
         let displayTime;
 
         if (type === 'round') {
+          // 循环间大休（当前未使用，保留）
           restMsg = '组间休息';
         } else if (type === 'group') {
+          // 组间休息（两组动作之间的休息）
           if (totalSeconds >= 60) {
             displayTime = Math.round((totalSeconds / 60) * 10) / 10;
-            restMsg = `休息 ${displayTime} 分钟`;
+            restMsg = `休息 ${displayTime} 分钟`;   // ← 改这里可自定义
           } else {
-            restMsg = `休息 ${Math.ceil(totalSeconds)} 秒`;
+            restMsg = `休息 ${Math.ceil(totalSeconds)} 秒`; // ← 改这里
           }
         } else if (type === 'action') {
+          // 动作间休息（独立休息块）
           if (totalSeconds >= 60) {
             displayTime = Math.round((totalSeconds / 60) * 10) / 10;
-            restMsg = `动作间休息 ${displayTime} 分钟`;
+            restMsg = `动作间休息 ${displayTime} 分钟`; // ← 改这里
           } else {
-            restMsg = `休息 ${Math.ceil(totalSeconds)} 秒，准备下一个动作`;
+            restMsg = `休息 ${Math.ceil(totalSeconds)} 秒，准备下一个动作`; // ← 改这里
           }
         } else {
           restMsg = `休息 ${Math.ceil(totalSeconds)} 秒`;
@@ -478,9 +485,6 @@
         console.log(`📢 [_startRest] 异步播报休息语音: "${restMsg}"`);
         SpeechEngine.speak(restMsg);
       }
-
-      // ★ 新增：在 onRestStart 中传递 nextStep
-      this._trigger('onRestStart', { type, duration: totalSeconds, remaining: totalSeconds, nextStep });
 
       this._startRestTimer(totalSeconds, type, onComplete);
     }
@@ -582,5 +586,7 @@
   }
 
   window.TrainingEngine = TrainingEngine;
-  console.log('✅ TrainingEngine 已加载（含 nextStep 传递）');
+
+  console.log('✅ TrainingEngine 已加载（完整版）');
+
 })();

@@ -25,6 +25,7 @@
       <span class="subtitle">Build. Flow. Recover.</span>
     </header>
 
+    <!-- 快速开始按钮 -->
     <div class="quick-start-wrap">
       <button id="btn-quick-start" class="btn quick-start-btn">🧘 快速训练</button>
     </div>
@@ -35,18 +36,12 @@
       </div>
     </main>
 
-    <!-- ★ 修改：两行按钮布局 -->
     <footer class="home-footer">
-      <div class="footer-row">
-        <button id="btn-manage-projects" class="btn secondary">📋 管理动作</button>
-        <button id="btn-manage-routines" class="btn primary">📝 新建训练组</button>
-        <button id="btn-manage-categories" class="btn btn-manage-categories">🏷️ 管理训练计划</button>
-      </div>
-      <div class="footer-row">
-        <button id="btn-speech-toggle" class="btn secondary">🗣️ 语音 ON</button>
-        <button id="btn-export-data" class="btn secondary">⬇️ 导出</button>
-        <button id="btn-import-data" class="btn secondary">⬆️ 导入</button>
-      </div>
+      <button id="btn-manage-projects" class="btn secondary">📋 管理动作</button>
+      <button id="btn-new-routine" class="btn primary">📝 新建训练组</button>
+      <button id="btn-speech-toggle" class="btn secondary" style="flex:0.6;">🗣️ 语音 ON</button>
+      <button id="btn-export-data" class="btn secondary" style="flex:0.6;">⬇️ 导出</button>
+      <button id="btn-import-data" class="btn secondary" style="flex:0.6;">⬆️ 导入</button>
     </footer>
   </section>
 
@@ -123,10 +118,6 @@
           <label>组名</label>
           <input type="text" id="routine-name" placeholder="例如：腿部轰炸日">
         </div>
-        <div class="field">
-          <label>所属分类</label>
-          <div id="category-checkboxes" class="category-checkboxes"></div>
-        </div>
         <div class="field-row">
           <div class="field">
             <label>循环次数</label>
@@ -199,6 +190,7 @@
         <div id="training-total-progress" class="progress-fill" style="width: 0%"></div>
       </div>
 
+      <!-- 音效 + 语音开关行 -->
       <div class="training-switches">
         <button id="btn-training-sound" class="toggle-switch on">🔊 音效</button>
         <button id="btn-training-voice" class="toggle-switch on">🗣️ 语音</button>
@@ -218,6 +210,7 @@
   <!-- 视图 5: 呼吸训练 (快速开始)                                   -->
   <!-- ============================================================ -->
   <section id="view-breath" class="view">
+    <!-- 设置界面 -->
     <div id="breath-setup" class="breath-setup">
       <header class="view-header">
         <button class="btn-back" data-target="home">← 返回</button>
@@ -301,6 +294,7 @@
       </main>
     </div>
 
+    <!-- 执行界面 -->
     <div id="breath-exec" class="breath-exec hidden">
       <header class="training-header">
         <button id="btn-breath-back" class="btn-icon">✕</button>
@@ -336,27 +330,6 @@
     </div>
   </section>
 
-  <!-- ============================================================ -->
-  <!-- 视图 6: 分类管理 (新增)                                      -->
-  <!-- ============================================================ -->
-  <section id="view-categories" class="view">
-    <header class="view-header">
-      <button class="btn-back" data-target="home">← 返回</button>
-      <h2>🏷️ 训练计划管理</h2>
-    </header>
-
-    <main class="category-manager" id="category-manager">
-      <div id="category-list" class="category-list">
-        <div class="empty-state">暂无分类，请添加</div>
-      </div>
-
-      <div class="add-category-row">
-        <input type="text" id="new-category-name" placeholder="新分类名称…">
-        <button id="btn-add-category" class="btn primary">添加</button>
-      </div>
-    </main>
-  </section>
-
 </div>
 
 <!-- ============================================================ -->
@@ -368,7 +341,7 @@
   <button id="btn-close-banner" class="btn-close">&times;</button>
 </div>
 
-<!-- 脚本加载顺序 -->
+<!-- 脚本加载顺序（注意：app.js 必须在最后） -->
 <script src="js/utils.js"></script>
 <script src="js/db.js"></script>
 <script src="js/audio.js"></script>

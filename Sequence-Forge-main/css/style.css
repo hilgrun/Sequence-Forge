@@ -43,6 +43,7 @@ html, body {
   background: var(--bg);
 }
 
+/* ==================== 视图切换 ==================== */
 .view {
   display: none;
   flex-direction: column;
@@ -64,6 +65,7 @@ html, body {
 
 .hidden { display: none !important; }
 
+/* ==================== 通用组件 ==================== */
 .btn {
   padding: 12px 16px;
   border: none;
@@ -212,6 +214,7 @@ html, body {
   gap: 10px;
 }
 
+/* 快速开始按钮 */
 .quick-start-wrap {
   padding: 4px 0 8px;
   flex-shrink: 0;
@@ -233,65 +236,7 @@ html, body {
   transform: scale(0.97);
 }
 
-/* 分类折叠组样式 */
-.category-group {
-  margin-bottom: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
-  overflow: hidden;
-}
-.category-header {
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  cursor: pointer;
-  gap: 8px;
-  user-select: none;
-  background: var(--bg);
-}
-.category-header .toggle-arrow {
-  font-size: 0.7rem;
-  color: var(--muted);
-  transition: transform 0.2s;
-}
-.category-header .category-name {
-  font-weight: 600;
-  flex: 1;
-}
-.category-header .category-count {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-.smart-play {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 16px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.2s;
-  white-space: nowrap;
-  min-width: 96px;
-  text-align: center;
-}
-.smart-play:hover {
-  background: #4793e8;
-}
-.smart-play:active {
-  transform: scale(0.95);
-}
-.category-routines {
-  padding: 6px 12px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 训练组卡片 */
+/* ===== 训练组卡片 ===== */
 .routine-card {
   position: relative;
   background: var(--card);
@@ -309,15 +254,10 @@ html, body {
 }
 .routine-card .card-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
   font-size: 0.8rem;
   color: var(--muted);
   margin-top: 4px;
-}
-.routine-card .card-meta .last-used {
-  color: var(--secondary);
-  font-weight: 500;
 }
 .routine-card .card-badge {
   display: inline-block;
@@ -360,36 +300,19 @@ html, body {
   border-color: var(--danger);
 }
 
-/* ★ 修改：主页底部按钮两行布局 */
 .home-footer {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
   padding-top: 10px;
   border-top: 1px solid var(--border);
 }
-
-.footer-row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.footer-row .btn {
-  flex: 1;
+.home-footer .btn {
+  flex: 1 1 calc(50% - 8px);
   min-width: 0;
   font-size: 0.85rem;
   padding: 10px 8px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.btn-manage-categories {
-  background: #6e40c9;
-}
-.btn-manage-categories:hover {
-  background: #7d4fd9;
 }
 
 /* ==================== 视图 2: 动作设定 ==================== */
@@ -644,36 +567,6 @@ html, body {
   margin-bottom: 0;
 }
 
-.category-checkboxes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 6px 0;
-}
-.category-checkboxes label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--bg);
-  padding: 4px 12px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.category-checkboxes label:has(input:checked) {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-.category-checkboxes input[type="checkbox"] {
-  accent-color: var(--accent);
-  width: 16px;
-  height: 16px;
-  margin: 0;
-}
-
 .step-timeline {
   flex: 1;
   overflow-y: auto;
@@ -790,14 +683,13 @@ html, body {
   margin: 2px 0;
 }
 .top-left .training-note {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--muted);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 4px;
-  min-height: 1.2em;
 }
 
 /* 右上：配图 */
@@ -885,59 +777,6 @@ html, body {
   margin-top: 6px;
 }
 
-/* ==================== 视图 5: 分类管理 ==================== */
-.category-manager {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 4px 0;
-}
-.category-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-}
-.category-item span {
-  font-weight: 500;
-}
-.btn-delete-category {
-  background: var(--danger);
-  border: none;
-  color: #fff;
-  padding: 4px 14px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-.btn-delete-category:hover {
-  opacity: 0.8;
-}
-.add-category-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-  flex-shrink: 0;
-}
-.add-category-row input {
-  flex: 1;
-  padding: 10px 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 0.95rem;
-}
-.add-category-row .btn {
-  flex: 0 0 auto;
-  padding: 10px 20px;
-}
-
 /* ==================== 安装横幅 ==================== */
 #install-banner {
   position: fixed;
@@ -1001,7 +840,11 @@ html, body {
   gap: 14px;
   padding: 8px 0 12px;
 }
-.breath-main > * { flex-shrink: 0; }
+
+/* 所有子元素不拉伸 */
+.breath-main > * {
+  flex-shrink: 0;
+}
 
 .breath-sliders {
   background: var(--card);
@@ -1093,7 +936,7 @@ html, body {
   padding: 16px 0;
   font-size: 1.1rem;
   margin-top: 4px;
-  flex: 0 0 auto;
+  flex: 0 0 auto;          /* 不拉伸，保持自身高度 */
   min-height: 56px;
 }
 
@@ -1170,6 +1013,7 @@ html, body {
   margin: 6px auto 0;
 }
 
+/* 呼吸训练完成提示 */
 .breath-complete-text {
   font-size: 2.5rem;
   font-weight: 700;
@@ -1177,6 +1021,8 @@ html, body {
   text-align: center;
 }
 
+
+/* 训练页开关行 */
 .training-switches {
   display: flex;
   gap: 10px;
@@ -1222,9 +1068,4 @@ html, body {
   .top-left .training-note { font-size: 0.55rem; }
   .training-header .training-title { font-size: 0.8rem; }
   .training-header .training-progress { font-size: 0.9rem; }
-}
-
-#btn-manage-projects {
-  background: #2272c2;
-  color: #fff; 
 }

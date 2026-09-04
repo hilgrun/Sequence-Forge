@@ -1,17 +1,18 @@
-// js/db.js - 数据层：IndexedDB 封装 + 导入导出（含分类）
+// js/db.js - 数据层：IndexedDB 封装 + 导入导出
 (function() {
   'use strict';
 
   const DB_NAME = 'SequenceForgeDB';
-  const DB_VERSION = 2; // ★ 版本升级到 2
+  const DB_VERSION = 1;
   const STORE_PROJECTS = 'projects';
   const STORE_ROUTINES = 'routines';
-  const STORE_CATEGORIES = 'categories'; // ★ 新增
 
+  // ---------- 工具函数 ----------
   function generateId() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6);
   }
 
+  // 将 Blob/File 转为 base64 DataURL
   function fileToDataURL(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -21,6 +22,10 @@
     });
   }
 
+  // 数据 URL 转 Blob（用于导出时直接存为 base64，无需转）
+  // 但我们储存时直接存 dataURL 字符串
+
+  // ---------- 数据库连接 ----------
   let db = null;
 
   function openDB() {
@@ -38,10 +43,6 @@
         if (!d.objectStoreNames.contains(STORE_ROUTINES)) {
           d.createObjectStore(STORE_ROUTINES, { keyPath: 'id' });
         }
-        // ★ 新增：创建分类存储
-        if (!d.objectStoreNames.contains(STORE_CATEGORIES)) {
-          d.createObjectStore(STORE_CATEGORIES, { keyPath: 'id' });
-        }
       };
       request.onsuccess = (e) => {
         db = e.target.result;
@@ -51,6 +52,7 @@
     });
   }
 
+  // ---------- 通用 CRUD 辅助 ----------
   function putItem(storeName, item) {
     return openDB().then(db => {
       return new Promise((resolve, reject) => {
@@ -111,57 +113,70 @@
     });
   }
 
+  // ---------- 对外 API ----------
   const DB = {
 
     // ----- Projects -----
     async saveProject(project) {
       if (!project.id) project.id = generateId();
+      // 确保 phases 是数组，每个元素有 type 和 duration
       if (!Array.isArray(project.phases)) project.phases = [];
+      // 如果传了 File 对象，需要先转 base64
       if (project.imageFile && typeof project.imageFile !== 'string') {
         project.imageData = await fileToDataURL(project.imageFile);
         delete project.imageFile;
       }
+      // 确保 imageData 是字符串或 null
       return putItem(STORE_PROJECTS, project);
     },
-    getProject(id) { return getItem(STORE_PROJECTS, id); },
-    getAllProjects() { return getAllItems(STORE_PROJECTS); },
-    deleteProject(id) { return deleteItem(STORE_PROJECTS, id); },
+
+    getProject(id) {
+      return getItem(STORE_PROJECTS, id);
+    },
+
+    getAllProjects() {
+      return getAllItems(STORE_PROJECTS);
+    },
+
+    deleteProject(id) {
+      return deleteItem(STORE_PROJECTS, id);
+    },
 
     // ----- Routines -----
     async saveRoutine(routine) {
       if (!routine.id) routine.id = generateId();
       if (!Array.isArray(routine.steps)) routine.steps = [];
-      // ★ 确保 categories 字段存在
-      if (!routine.categories) routine.categories = [];
+      // steps 里每个元素保证有 kind
       return putItem(STORE_ROUTINES, routine);
     },
-    getRoutine(id) { return getItem(STORE_ROUTINES, id); },
-    getAllRoutines() { return getAllItems(STORE_ROUTINES); },
-    deleteRoutine(id) { return deleteItem(STORE_ROUTINES, id); },
 
-    // ★ ----- Categories (新增) -----
-    async saveCategory(category) {
-      if (!category.id) category.id = generateId();
-      return putItem(STORE_CATEGORIES, category);
+    getRoutine(id) {
+      return getItem(STORE_ROUTINES, id);
     },
-    getAllCategories() { return getAllItems(STORE_CATEGORIES); },
-    deleteCategory(id) { return deleteItem(STORE_CATEGORIES, id); },
-    async clearCategories() { return clearStore(STORE_CATEGORIES); },
 
-    // ----- 导入 / 导出 (修改以包含分类) -----
+    getAllRoutines() {
+      return getAllItems(STORE_ROUTINES);
+    },
+
+    deleteRoutine(id) {
+      return deleteItem(STORE_ROUTINES, id);
+    },
+
+    // ----- 导入 / 导出 -----
+    // 导出：返回一个 JSON 字符串（包含所有 projects 和 routines，以及元数据）
     async exportData() {
       const projects = await this.getAllProjects();
       const routines = await this.getAllRoutines();
-      const categories = await this.getAllCategories();
-      return JSON.stringify({
-        version: 2,
+      const payload = {
+        version: 1,
         exportedAt: new Date().toISOString(),
-        projects,
-        routines,
-        categories
-      }, null, 2);
+        projects: projects,
+        routines: routines
+      };
+      return JSON.stringify(payload, null, 2);
     },
 
+    // 导入：接收一个 JSON 字符串，清空现有数据并写入新数据
     async importData(jsonStr) {
       let payload;
       try {
@@ -172,19 +187,21 @@
       if (!payload.projects || !payload.routines) {
         throw new Error('数据格式错误：缺少 projects 或 routines 字段');
       }
+      // 清空现有数据
       await clearStore(STORE_PROJECTS);
       await clearStore(STORE_ROUTINES);
-      await clearStore(STORE_CATEGORIES);
+      // 批量写入
       const dbConn = await openDB();
-      const tx = dbConn.transaction([STORE_PROJECTS, STORE_ROUTINES, STORE_CATEGORIES], 'readwrite');
+      const tx = dbConn.transaction([STORE_PROJECTS, STORE_ROUTINES], 'readwrite');
       const projStore = tx.objectStore(STORE_PROJECTS);
       const routStore = tx.objectStore(STORE_ROUTINES);
-      const catStore = tx.objectStore(STORE_CATEGORIES);
-      for (const p of payload.projects) projStore.put(p);
-      for (const r of payload.routines) routStore.put(r);
-      if (payload.categories) {
-        for (const c of payload.categories) catStore.put(c);
+      for (const p of payload.projects) {
+        projStore.put(p);
       }
+      for (const r of payload.routines) {
+        routStore.put(r);
+      }
+      // 等待事务完成
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
@@ -192,13 +209,15 @@
       });
     },
 
+    // 辅助：获取所有数据（不序列化），用于预览或调试
     async getAllData() {
       const projects = await this.getAllProjects();
       const routines = await this.getAllRoutines();
-      const categories = await this.getAllCategories();
-      return { projects, routines, categories };
+      return { projects, routines };
     }
   };
 
+  // 暴露全局
   window.DB = DB;
+
 })();
